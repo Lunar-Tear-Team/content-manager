@@ -1,10 +1,10 @@
-# Content Manager — NieR Re[in]carnation
+# Content Manager
 
 A standalone companion tool for [lunar-tear](https://github.com/Lunar-Tear-Team/lunar-tear) that lets you control which gacha banners, events, login bonuses, and side stories are active in the game client — without restarting the server.
 
 ## The Problem
 
-The NieR Re[in]carnation End-of-Service database contains **3+ years** of live-service content: 80+ gacha banners, 140+ side stories, dozens of events and login bonuses. Loading all of it at once causes severe UI lag, memory bloat, and menu freezing because the mobile client was never designed to render that volume simultaneously.
+The End-of-Service database contains **3+ years** of live-service content: 80+ gacha banners, 140+ side stories, dozens of events and login bonuses. Loading all of it at once causes severe UI lag, memory bloat, and menu freezing because the mobile client was never designed to render that volume simultaneously.
 
 ## How It Works
 
@@ -111,7 +111,7 @@ The content manager requires a small hook in lunar-tear to work. The game server
 
 ## Known Limitations
 
-- **Zero-banner crash**: If you deselect everything, the NieR client crashes trying to render an empty 3D gacha room. The patcher automatically injects fallback banners (IDs 45 & 46) to prevent this.
+- **Zero-banner crash**: If you deselect everything, the client crashes trying to render an empty 3D gacha room. The patcher automatically injects fallback banners (IDs 45 & 46) to prevent this.
 - **Pre-2022 side stories**: The "Recollections of Dusk" system launched in August 2022, so no side stories will appear for months before that — this is historically accurate.
 - **Memorial Quests**: Late-game events were migrated by Applibot to the "Memorial Quests" tab in the final EOS client. They still unlock correctly but won't appear in the standard Subquests menu.
 
