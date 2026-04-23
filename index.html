@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Tear — Content Schedule Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3341;
+  --text: #e4e6eb;
+  --text-dim: #8b8fa3;
+  --accent: #7c5bf5;
+  --accent-glow: rgba(124,91,245,0.25);
+  --green: #3dd68c;
+  --red: #f5555d;
+  --orange: #f59e0b;
+  --blue: #3b82f6;
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 40px 0 24px;
+}
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7c5bf5, #3dd68c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.header p { color: var(--text-dim); font-size: 14px; }
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.stat-card .value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.stat-card .label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Actions bar */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.btn-primary:hover { transform: translateY(-1px); filter: brightness(1.1); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: var(--red); color: white; }
+.btn-success { background: var(--green); color: #0f1117; }
+
+/* Status toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--green); color: #0f1117; }
+.toast.error { background: var(--red); color: white; }
+
+/* Bundle timeline */
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.bundle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.bundle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: all 0.2s;
+  position: relative;
+}
+.bundle-card.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+.bundle-card .month {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.bundle-card .counts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bundle-card .count-pill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.bundle-card .count-pill.events { color: var(--blue); }
+.bundle-card .count-pill.gacha { color: var(--orange); }
+.bundle-card .count-pill.login { color: var(--green); }
+.bundle-card .count-pill.sidestory { color: var(--accent); }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider {
+  position: absolute;
+  inset: 0;
+  background: var(--surface2);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: 0.3s;
+  border: 1px solid var(--border);
+}
+.toggle .slider:before {
+  content: "";
+  position: absolute;
+  width: 18px; height: 18px;
+  left: 3px; bottom: 2px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked + .slider:before { transform: translateX(19px); background: white; }
+
+/* Unreleased section */
+.unreleased-section {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 32px;
+  opacity: 0.7;
+}
+.unreleased-section.active { opacity: 1; border-color: var(--orange); }
+
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--text-dim);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Presets */
+.presets { margin-bottom: 24px; }
+.presets label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-dim);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Content Schedule Manager</h1>
+    <p>NieR Re[in]carnation — Lunar Tear Server</p>
+  </div>
+
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card"><div class="value" id="stat-bundles">-</div><div class="label">Active Bundles</div></div>
+    <div class="stat-card"><div class="value" id="stat-gacha">-</div><div class="label">Active Banners</div></div>
+    <div class="stat-card"><div class="value" id="stat-total-bundles">-</div><div class="label">Total Bundles</div></div>
+    <div class="stat-card"><div class="value" id="stat-permanent">-</div><div class="label">Permanent Events</div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-apply" onclick="applyChanges()" disabled>💾 Apply Changes</button>
+    <button class="btn btn-secondary" onclick="reloadFromDisk()">🔄 Reload from Disk</button>
+  </div>
+
+  <div class="presets">
+    <label>Quick Presets</label>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="presetNone()">None</button>
+      <button class="btn btn-secondary" onclick="presetAll()">All Content</button>
+      <button class="btn btn-secondary" onclick="presetChronological()">Chronological…</button>
+    </div>
+  </div>
+
+  <div id="content-area">
+    <div class="loading-overlay"><span class="spinner"></span> Loading content bundles…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let bundles = [];
+let currentBundleData = null;
+let schedule = { mode: "bundles", active_bundles: [], always_enabled: { event_chapters: [], side_story_quests: [] }, disabled_overrides: { event_chapters: [], gacha_ids: [], login_bonus_ids: [] }, unreleased_enabled: false };
+let pendingChanges = false;
+
+async function init() {
+  try {
+    const [bundleRes, statusRes] = await Promise.all([
+      fetch("/api/bundles").then(r => r.json()),
+      fetch("/api/status").then(r => r.json())
+    ]);
+    bundles = bundleRes.bundles || [];
+    currentBundleData = bundleRes;
+    schedule = statusRes.schedule;
+    updateStats(statusRes.stats);
+    renderBundles(bundleRes);
+  } catch (e) {
+    document.getElementById("content-area").innerHTML =
+      '<div class="loading-overlay">❌ Failed to load data: ' + e.message + '</div>';
+  }
+}
+
+function updateStats(stats) {
+  document.getElementById("stat-bundles").textContent = stats.active_bundles;
+  document.getElementById("stat-gacha").textContent = stats.active_gacha_entries;
+  document.getElementById("stat-total-bundles").textContent = stats.total_bundles;
+  document.getElementById("stat-permanent").textContent = stats.permanent_event_count;
+}
+
+function renderBundles(data) {
+  const activeBundles = new Set(schedule.active_bundles || []);
+  let html = '';
+
+  // Monthly bundles
+  html += '<div class="section-title"><span class="dot"></span>Monthly Content Bundles</div>';
+  html += '<div class="bundle-grid">';
+  for (const b of data.bundles) {
+    if (b.month === "unknown" || b.month === "overflow" || b.month === "1970-01") continue;
+    if (isUnreleased(b.month)) continue;
+    const active = activeBundles.has(b.month);
+    html += renderBundleCard(b, active);
+  }
+  html += '</div>';
+
+  // Unreleased
+  const unrel = data.unreleased;
+  if (unrel && (unrel.event_chapters.length || unrel.gacha_ids.length || unrel.login_bonuses.length)) {
+    html += '<div class="section-title"><span class="dot" style="background:var(--orange)"></span>Unreleased Content (2099)</div>';
+    html += '<div class="unreleased-section ' + (schedule.unreleased_enabled ? 'active' : '') + '" id="unreleased-section">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<span style="font-weight:600">Enable Unreleased Content</span>';
+    html += '<label class="toggle"><input type="checkbox" ' + (schedule.unreleased_enabled ? 'checked' : '') + ' onchange="toggleUnreleased(this.checked)"><span class="slider"></span></label>';
+    html += '</div>';
+    html += '<div class="counts">';
+    if (unrel.event_chapters.length) html += '<span class="count-pill events">' + unrel.event_chapters.length + ' events</span>';
+    if (unrel.gacha_ids.length) html += '<span class="count-pill gacha">' + unrel.gacha_ids.length + ' banners</span>';
+    if (unrel.login_bonuses.length) html += '<span class="count-pill login">' + unrel.login_bonuses.length + ' login bonuses</span>';
+    html += '</div></div>';
+  }
+
+  // Permanent
+  const perm = data.permanent;
+  if (perm && perm.event_chapters.length) {
+    html += '<div class="section-title"><span class="dot" style="background:var(--green)"></span>Permanent Content (always active)</div>';
+    html += '<div class="bundle-card" style="margin-bottom:32px;border-color:var(--green);opacity:0.8">';
+    html += '<div class="counts">';
+    html += '<span class="count-pill events">' + perm.event_chapters.length + ' permanent events</span>';
+    html += '</div></div>';
+  }
+
+  document.getElementById("content-area").innerHTML = html;
+}
+
+function renderBundleCard(b, active) {
+  const monthLabel = formatMonth(b.month);
+  let html = '<div class="bundle-card ' + (active ? 'active' : '') + '" id="bundle-' + b.month + '">';
+  html += '<div class="month"><span>' + monthLabel + '</span>';
+  html += '<label class="toggle"><input type="checkbox" ' + (active ? 'checked' : '') + ' onchange="toggleBundle(\'' + b.month + '\', this.checked)"><span class="slider"></span></label>';
+  html += '</div>';
+  html += '<div class="counts">';
+  if (b.event_count) html += '<span class="count-pill events">📋 ' + b.event_count + ' events</span>';
+  if (b.gacha_count) html += '<span class="count-pill gacha">🎰 ' + b.gacha_count + ' banners</span>';
+  if (b.login_count) html += '<span class="count-pill login">🎁 ' + b.login_count + ' login</span>';
+  if (b.side_story_count) html += '<span class="count-pill sidestory">📖 ' + b.side_story_count + ' stories</span>';
+  html += '</div></div>';
+  return html;
+}
+
+function formatMonth(m) {
+  const [y, mo] = m.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[parseInt(mo)-1] + " " + y;
+}
+
+function isUnreleased(month) {
+  return month >= "2099";
+}
+
+function toggleBundle(month, enabled) {
+  const set = new Set(schedule.active_bundles || []);
+  if (enabled) set.add(month); else set.delete(month);
+  schedule.active_bundles = Array.from(set).sort();
+  markDirty();
+
+  const card = document.getElementById("bundle-" + month);
+  if (card) card.classList.toggle("active", enabled);
+}
+
+function toggleUnreleased(enabled) {
+  schedule.unreleased_enabled = enabled;
+  markDirty();
+  const section = document.getElementById("unreleased-section");
+  if (section) section.classList.toggle("active", enabled);
+}
+
+function markDirty() {
+  pendingChanges = true;
+  document.getElementById("btn-apply").disabled = false;
+}
+
+async function applyChanges() {
+  const btn = document.getElementById("btn-apply");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Applying…';
+
+  try {
+    const res = await fetch("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(schedule)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      updateStats(data.stats);
+      pendingChanges = false;
+      showToast("Changes applied — " + data.stats.active_gacha_entries + " banners active", "success");
+    } else {
+      showToast("Failed to apply", "error");
+    }
+  } catch (e) {
+    showToast("Error: " + e.message, "error");
+  }
+
+  btn.innerHTML = '💾 Apply Changes';
+  btn.disabled = !pendingChanges;
+}
+
+async function reloadFromDisk() {
+  try {
+    const res = await fetch("/api/reload", { method: "POST" });
+    const data = await res.json();
+    if (data.ok) {
+      showToast("Reloaded from disk", "success");
+      init();
+    }
+  } catch (e) {
+    showToast("Reload failed: " + e.message, "error");
+  }
+}
+
+function presetNone() {
+  schedule.active_bundles = [];
+  schedule.unreleased_enabled = false;
+  markDirty();
+  renderBundles(currentBundleData);
+}
+
+function presetAll() {
+  schedule.active_bundles = bundles.map(b => b.month).filter(m => !isUnreleased(m) && m !== "unknown" && m !== "1970-01");
+  schedule.unreleased_enabled = false;
+  markDirty();
+  renderBundles(currentBundleData);
+}
+
+function presetChronological() {
+  const validMonths = bundles.map(b => b.month).filter(m => !isUnreleased(m) && m !== "unknown" && m !== "1970-01").sort();
+  const upTo = prompt("Enable content up to which month?\\n\\nAvailable: " + validMonths[0] + " → " + validMonths[validMonths.length-1] + "\\n\\nEnter YYYY-MM:", validMonths[Math.min(5, validMonths.length-1)]);
+  if (!upTo) return;
+  schedule.active_bundles = validMonths.filter(m => m <= upTo);
+  schedule.unreleased_enabled = false;
+  markDirty();
+  renderBundles(currentBundleData);
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast " + type + " show";
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+init();
+</script>
+</body>
+</html>
