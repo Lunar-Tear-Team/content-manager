@@ -57,8 +57,12 @@ The Content Manager acts as a **time machine** for the game's master data:
 # 2. Build
 go build -o content-manager main.go
 
-# 3. Generate the `bundle_index.json` file using the `generate_bundle_index.py` script
-python generate_bundle_index.py --dump-dir <path/to/master_data> --output ../lunar-tear/server/assets/bundle_index.json
+# 3. Generate bundle_index.json (one-time setup)
+#    First, extract the master data tables from the binary:
+python dump_masterdata.py --input ../lunar-tear/server/assets/release/<database>.bin.e --output-dir master_data
+
+#    Then generate the bundle index from the extracted tables:
+python generate_bundle_index.py --dump-dir ../lunar-tear/server/assets/master_data --output ../lunar-tear/server/assets/bundle_index.json
 
 # 4. Run
 ./content-manager
@@ -94,6 +98,8 @@ Open **http://localhost:8081** in your browser.
 | `main.go` | Go web server — serves the dashboard, handles `/api/schedule` and `/api/bundles`, invokes the Python patcher, pings the lunar-tear webhook |
 | `index.html` | Single-page admin UI with monthly bundle toggles, presets, and live stats |
 | `patch_masterdata.py` | Python script that decrypts `database.bin.e` (AES-128-CBC), mutates `EndDatetime` fields in the MessagePack/LZ4 binary, and re-encrypts it |
+| `generate_bundle_index.py` | One-time setup script that reads extracted master data JSON tables and builds `bundle_index.json` (monthly content mapping) |
+| `dump_masterdata.py` | Extracts the encrypted master data binary into individual JSON table files for use by `generate_bundle_index.py` |
 
 ## API Endpoints
 

@@ -75,6 +75,21 @@ def main():
         help="Output file path (default: bundle_index.json)"
     )
     args = parser.parse_args()
+    # Validate input
+    if os.path.isfile(args.dump_dir):
+        if args.dump_dir.endswith('.bin.e') or args.dump_dir.endswith('.bin'):
+            print(f"ERROR: --dump-dir expects a directory of extracted JSON table files, not a binary.", file=sys.stderr)
+            print(f"  You passed: {args.dump_dir}", file=sys.stderr)
+            print(f"  First extract the tables: python dump_masterdata.py --input {args.dump_dir} --output-dir master_data", file=sys.stderr)
+            print(f"  Then run: python {sys.argv[0]} --dump-dir master_data", file=sys.stderr)
+            sys.exit(1)
+        else:
+            print(f"ERROR: --dump-dir must be a directory, got a file: {args.dump_dir}", file=sys.stderr)
+            sys.exit(1)
+
+    if not os.path.isdir(args.dump_dir):
+        print(f"ERROR: directory not found: {args.dump_dir}", file=sys.stderr)
+        sys.exit(1)
 
     print(f"Reading master data from {args.dump_dir}/...")
 
@@ -194,7 +209,10 @@ def main():
     print(f"  Gacha banners: {total_gacha} ({len(unreleased['gacha_ids'])} unreleased)")
     print(f"  Login bonuses: {total_login} ({len(unreleased['login_bonuses'])} unreleased)")
     print(f"  Side stories: {total_ss}")
-    print(f"  Date range: {sorted(output_bundles.keys())[0]} -> {sorted(output_bundles.keys())[-1]}")
+    if output_bundles:
+        print(f"  Date range: {sorted(output_bundles.keys())[0]} -> {sorted(output_bundles.keys())[-1]}")
+    else:
+        print(f"  Date range: (none — no content found, check --dump-dir)")
 
 
 if __name__ == "__main__":
