@@ -389,11 +389,13 @@ def main():
             allowed_events = set(bundle_index.get("permanent", {}).get("event_chapters", []))
             allowed_gacha = set(bundle_index.get("permanent", {}).get("gacha_ids", []))
             allowed_login = set(bundle_index.get("permanent", {}).get("login_bonuses", []))
+            allowed_shops = set(bundle_index.get("permanent", {}).get("shop_ids", []))
 
             if schedule.get("unreleased_enabled", False):
                 allowed_events.update(bundle_index.get("unreleased", {}).get("event_chapters", []))
                 allowed_gacha.update(bundle_index.get("unreleased", {}).get("gacha_ids", []))
                 allowed_login.update(bundle_index.get("unreleased", {}).get("login_bonuses", []))
+                allowed_shops.update(bundle_index.get("unreleased", {}).get("shop_ids", []))
 
             for bid in schedule.get("active_bundles", []):
                 bundle = bundle_index.get("bundles", {}).get(bid)
@@ -401,6 +403,7 @@ def main():
                     allowed_events.update(bundle.get("event_chapters", []))
                     allowed_gacha.update(bundle.get("gacha_ids", []))
                     allowed_login.update(bundle.get("login_bonuses", []))
+                    allowed_shops.update(bundle.get("shop_ids", []))
 
             if not allowed_gacha:
                 # Failsafe: if no banners are selected, the game freezes. Force the Automata banner (45, 46).
@@ -410,7 +413,8 @@ def main():
             schedule_active_ids['m_event_quest_chapter'] = allowed_events
             schedule_active_ids['m_mom_banner'] = allowed_gacha
             schedule_active_ids['m_login_bonus'] = allowed_login
-            print(f"  Schedule loaded: {len(allowed_events)} events, {len(allowed_gacha)} gachas, {len(allowed_login)} login bonuses active")
+            schedule_active_ids['m_shop'] = allowed_shops
+            print(f"  Schedule loaded: {len(allowed_events)} events, {len(allowed_gacha)} gachas, {len(allowed_login)} login bonuses, {len(allowed_shops)} shops active")
         except Exception as e:
             print(f"ERROR: Failed to load schedule: {e}", file=sys.stderr)
             sys.exit(1)

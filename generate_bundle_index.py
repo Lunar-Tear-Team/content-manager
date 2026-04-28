@@ -98,6 +98,7 @@ def main():
     banners = load_table(args.dump_dir, "EntityMMomBannerTable.json")
     login_bonuses = load_table(args.dump_dir, "EntityMLoginBonusTable.json")
     ss_limit = load_table(args.dump_dir, "EntityMSideStoryQuestLimitContentTable.json")
+    shop_table = load_table(args.dump_dir, "EntityMShopTable.json")
 
     # --- Build bundles ---
     bundles = defaultdict(lambda: {
@@ -105,6 +106,7 @@ def main():
         "gacha_ids": [],
         "login_bonuses": [],
         "side_stories": [],
+        "shop_ids": [],
     })
     permanent = {
         "label": "Permanent Content",
@@ -112,6 +114,7 @@ def main():
         "gacha_ids": [],
         "login_bonuses": [],
         "side_stories": [],
+        "shop_ids": [],
     }
     unreleased = {
         "label": "Unreleased Content",
@@ -119,6 +122,7 @@ def main():
         "gacha_ids": [],
         "login_bonuses": [],
         "side_stories": [],
+        "shop_ids": [],
     }
 
     # Event Quest Chapters
@@ -171,6 +175,20 @@ def main():
         month = chapter_month.get(chapter_id, "unknown")
         bundles[month]["side_stories"].append(ss_id)
 
+    # Shops
+    for s in shop_table:
+        shop_id = s["ShopId"]
+        start = s.get("StartDatetime", 0)
+        end = s.get("EndDatetime", 0)
+        month = ms_to_month(start)
+
+        if is_unreleased(start):
+            unreleased["shop_ids"].append(shop_id)
+        elif is_permanent(end) and not is_unreleased(start):
+            permanent["shop_ids"].append(shop_id)
+        else:
+            bundles[month]["shop_ids"].append(shop_id)
+
     # --- Build output ---
     # Add labels to each monthly bundle
     output_bundles = {}
@@ -184,6 +202,7 @@ def main():
             "gacha_ids": b["gacha_ids"],
             "login_bonuses": b["login_bonuses"],
             "side_stories": b["side_stories"],
+            "shop_ids": b["shop_ids"],
         }
 
     result = {
@@ -202,12 +221,14 @@ def main():
     total_gacha = sum(len(b["gacha_ids"]) for b in output_bundles.values())
     total_login = sum(len(b["login_bonuses"]) for b in output_bundles.values())
     total_ss = sum(len(b["side_stories"]) for b in output_bundles.values())
+    total_shops = sum(len(b["shop_ids"]) for b in output_bundles.values())
 
     print(f"\nBundle index generated: {args.output}")
     print(f"  Monthly bundles: {len(output_bundles)}")
     print(f"  Events: {total_events} ({len(permanent['event_chapters'])} permanent, {len(unreleased['event_chapters'])} unreleased)")
     print(f"  Gacha banners: {total_gacha} ({len(unreleased['gacha_ids'])} unreleased)")
     print(f"  Login bonuses: {total_login} ({len(unreleased['login_bonuses'])} unreleased)")
+    print(f"  Shops: {total_shops} ({len(permanent['shop_ids'])} permanent, {len(unreleased['shop_ids'])} unreleased)")
     print(f"  Side stories: {total_ss}")
     if output_bundles:
         print(f"  Date range: {sorted(output_bundles.keys())[0]} -> {sorted(output_bundles.keys())[-1]}")

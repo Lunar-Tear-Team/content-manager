@@ -18,6 +18,7 @@ type Bundle struct {
 	GachaIds      []int32 `json:"gacha_ids"`
 	LoginBonuses  []int32 `json:"login_bonuses"`
 	SideStories   []int32 `json:"side_stories"`
+	ShopIds       []int32 `json:"shop_ids"`
 }
 
 type BundleIndex struct {
